@@ -13,11 +13,11 @@ services:
       # Database (use dev-file for simplicity, or PostgreSQL for production)
       KC_DB: dev-file
       # HTTP
-      KC_HTTP_PORT: 8180
+      KC_HTTP_PORT: 9016
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
     ports:
-      - "8180:8180"
+      - "9016:9016"
     volumes:
       # Persist data
       - keycloak_data:/opt/keycloak/data
