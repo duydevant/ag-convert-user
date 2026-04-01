@@ -15,7 +15,7 @@ services:
       KC_HTTP_PORT: 9016
       KC_HTTP_ENABLED: 'true'
       # Hostname — public domain qua reverse proxy (Nginx)
-      # KC_HOSTNAME: teacher.quizonline.website
+      KC_HOSTNAME: teacher.quizonline.website
       KC_HOSTNAME_STRICT: 'false'
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: 'true'
       # Proxy — trust X-Forwarded-* headers from Nginx
