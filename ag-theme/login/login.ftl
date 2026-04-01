@@ -10,7 +10,7 @@
                     <form id="kc-form-login" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
                         <#if !usernameHidden??>
                             <div class="${properties.kcFormGroupClass!} floating-label-group">
-                                <input tabindex="1" id="username" class="${properties.kcInputClass!}" name="username" value="${(login.username!'')}" type="text" autofocus autocomplete="off" placeholder=" "
+                                <input tabindex="1" id="username" class="${properties.kcInputClass!}" name="username" value="${(login.username!'')}" type="text" autocomplete="off" placeholder=" "
                                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" />
                                 <label for="username" class="floating-label">
                                     <#if !realm.loginWithEmailAllowed>${msg("username")}<#elseif !realm.registrationEmailAsUsername>${msg("usernameOrEmail")}<#else>${msg("email")}</#if>
@@ -38,7 +38,7 @@
                             </div>
                             <#if usernameHidden?? && messagesPerField.existsError('username','password')>
                                 <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                                        ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
+                                    ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
                                 </span>
                             </#if>
                         </div>
@@ -67,10 +67,35 @@
                             <input tabindex="4" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("logIn")}"/>
                         </div>
                     </form>
-                    <script>document.title = "Log in | ${realm.displayName!realm.name}";</script>
+                    <script>
+                        document.title = "Log in | ${realm.displayName!realm.name}";
+                        (function() {
+                            var fa = document.createElement('link');
+                            fa.rel = 'stylesheet';
+                            fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
+                            document.head.appendChild(fa);
+                        })();
+                    </script>
                 </#if>
             </div>
         </div>
+    <#elseif section = "socialProviders">
+        <#if realm.password && social?? && social.providers?has_content>
+            <div id="kc-social-providers">
+                <hr/>
+                <ul>
+                    <#list social.providers as p>
+                        <li>
+                            <a href="${p.loginUrl}" id="social-${p.alias}"
+                               class="pf-v5-c-button pf-m-secondary pf-m-block pf-v5-u-display-flex pf-v5-u-align-items-center">
+                                <i class="fa fa-${p.alias}" aria-hidden="true"></i>
+                                <span>${p.displayName!}</span>
+                            </a>
+                        </li>
+                    </#list>
+                </ul>
+            </div>
+        </#if>
     <#elseif section = "info">
         <#if realm.password && realm.registrationAllowed && !registrationDisabled??>
             <div id="kc-registration-container">

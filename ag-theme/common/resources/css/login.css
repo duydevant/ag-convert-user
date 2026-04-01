@@ -33,12 +33,11 @@ html .pf-v5-c-login__container {
 html .pf-v5-c-login {
   align-items: center;
   justify-content: center;
-  padding-bottom: 10vh;
 }
 html .pf-v5-c-login__main {
   border-radius: 8px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
 /* Logo */
@@ -63,7 +62,7 @@ html .pf-v5-c-login__main-body {
 }
 html .pf-v5-c-login__main-footer {
   padding: 0;
-  padding-bottom: 20px;
+  padding-bottom: 15px;
   width: 100%;
 }
 
@@ -81,7 +80,7 @@ html .pf-v5-c-login__main-footer-band-item {
 /* Title & Subtitle */
 html .pf-v5-c-login__main-header .pf-v5-c-title {
   text-align: center;
-  font-size: 24px;
+  font-size: 1.5rem;
   color: var(--color-text);
   margin-top: 8px;
 }
@@ -109,6 +108,7 @@ html .pf-v5-c-login__main-header .pf-v5-c-title {
   transition: all 0.15s ease;
   z-index: 1;
   padding: 0 4px;
+  left: 16px;
 }
 
 /* Float up on focus/filled */
@@ -389,11 +389,19 @@ html body .pf-v5-c-helper-text {
   font-weight: 500;
   color: #374151;
 }
+#kc-social-providers .fa,
+#kc-social-providers .fab,
+#kc-social-providers .fas {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
 #kc-social-providers a.pf-v5-c-button:hover,
 #kc-social-providers a.pf-v5-c-button:focus {
-  background: var(--color-bg);
-  border-color: #e2e8f0;
-  color: #374151;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
   box-shadow: none;
 }
 #kc-social-providers svg {
