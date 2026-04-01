@@ -1,0 +1,8 @@
+{
+  "themes": [
+    {
+      "name": "ag-theme",
+      "types": ["login", "account", "admin"]
+    }
+  ]
+}

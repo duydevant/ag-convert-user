@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keycloak Login - Migration Tool</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .token-section {
+      margin-top: 1.5rem;
+    }
+    .token-section h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .token-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      word-break: break-all;
+      max-height: 200px;
+      overflow-y: auto;
+      position: relative;
+    }
+    .token-box .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .token-box .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .user-info {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px 16px;
+      font-size: 0.85rem;
+    }
+    .user-info dt {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .user-info dd {
+      color: var(--text-primary);
+      word-break: break-all;
+    }
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-primary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .flow-step.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(108, 99, 255, 0.08);
+    }
+    .flow-step.done {
+      border-color: var(--success);
+      color: var(--success);
+      background: rgba(0, 214, 143, 0.05);
+    }
+    .flow-arrow {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    .login-hero {
+      text-align: center;
+      padding: 2rem 0;
+    }
+    .login-hero .kc-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, rgba(0, 214, 143, 0.2), rgba(108, 99, 255, 0.2));
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      border: 1px solid var(--border);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 214, 143, 0.2); }
+      50% { box-shadow: 0 0 0 12px rgba(0, 214, 143, 0); }
+    }
+    .login-hero h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .login-hero p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      max-width: 500px;
+      margin: 0 auto 1.5rem;
+      line-height: 1.6;
+    }
+    .btn-keycloak {
+      background: linear-gradient(135deg, #00d68f, #00b37a);
+      color: white;
+      box-shadow: 0 4px 20px rgba(0, 214, 143, 0.3);
+      padding: 14px 36px;
+      font-size: 1rem;
+      border-radius: 12px;
+    }
+    .btn-keycloak:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 214, 143, 0.4);
+    }
+    .btn-logout {
+      background: linear-gradient(135deg, var(--danger), #e65555);
+      color: white;
+      padding: 10px 24px;
+    }
+    .tokens-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 768px) {
+      .tokens-grid { grid-template-columns: 1fr; }
+      .flow-diagram { justify-content: center; }
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .status-dot.offline { background: var(--danger); }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo">🔄</div>
+      <span>Migration Tool</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Dashboard</a></li>
+      <li><a href="/register.html">Register</a></li>
+      <li><a href="/login.html">Login Test</a></li>
+      <li><a href="/export.html">Export/Import</a></li>
+      <li><a href="/migrate.html">Migrate</a></li>
+      <li><a href="/keycloak-login.html" class="active">Keycloak Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="container fade-in">
+    <div class="page-header">
+      <h1>🔐 Keycloak Login (SPI Migration)</h1>
+      <p>Đăng nhập qua Keycloak → SPI tự động xác thực Auth0 → Migrate password → Trả tokens</p>
+    </div>
+
+    <!-- Flow Diagram -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div class="flow-diagram" id="flowDiagram">
+        <div class="flow-step" id="flowStep1">👤 User</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="flowStep2">🔐 Keycloak Login</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="flowStep3">⚡ SPI Intercept</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="flowStep4">🔑 Auth0 Validate</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="flowStep5">💾 Save to KC</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="flowStep6">🎫 Tokens</div>
+      </div>
+    </div>
+
+    <!-- Before Login -->
+    <div id="loginSection">
+      <div class="card">
+        <div class="login-hero">
+          <div class="kc-icon">🔐</div>
+          <h2>Đăng nhập qua Keycloak</h2>
+          <p>
+            Click nút bên dưới để chuyển đến trang đăng nhập Keycloak.<br>
+            SPI sẽ tự động intercept → xác thực với Auth0 → migrate password → trả về tokens.
+          </p>
+          <button class="btn btn-keycloak" id="loginBtn" onclick="loginWithKeycloak()">
+            🔐 Đăng nhập với Keycloak
+          </button>
+        </div>
+
+        <div class="alert alert-info">
+          ℹ️ <strong>Flow hoạt động:</strong><br>
+          1. Redirect đến Keycloak login UI<br>
+          2. User nhập username/password<br>
+          3. <strong>Keycloak SPI</strong> intercept password → gọi Auth0 validate<br>
+          4. Auth0 OK → SPI lưu password vào Keycloak + mark migrated<br>
+          5. Keycloak trả authorization code về FE<br>
+          6. FE gửi code cho BE (NestJS) → BE exchange lấy tokens<br>
+          7. Hiển thị cả Keycloak token + Auth0 token (nếu có)
+        </div>
+      </div>
+    </div>
+
+    <!-- After Login - Token Display -->
+    <div id="tokenSection" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <div class="icon keycloak">✅</div>
+          <div>
+            <h3>Đăng nhập thành công!</h3>
+            <p>Tokens đã được nhận từ Keycloak</p>
+          </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- User Info -->
+        <div class="token-section">
+          <h4>👤 Thông tin User</h4>
+          <dl class="user-info" id="userInfo"></dl>
+        </div>
+
+        <!-- Tokens -->
+        <div class="tokens-grid">
+          <div class="token-section">
+            <h4><span class="status-dot online"></span> Keycloak Access Token</h4>
+            <div class="token-box">
+              <button class="copy-btn" onclick="copyToken('kcAccessToken')">📋 Copy</button>
+              <code id="kcAccessToken">-</code>
+            </div>
+          </div>
+          <div class="token-section">
+            <h4><span class="status-dot online"></span> Keycloak Refresh Token</h4>
+            <div class="token-box">
+              <button class="copy-btn" onclick="copyToken('kcRefreshToken')">📋 Copy</button>
+              <code id="kcRefreshToken">-</code>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem;">📦 Full Token Response</h4>
+          <div class="json-viewer" id="fullResponse">-</div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+          <button class="btn btn-outline" onclick="loginWithKeycloak()">🔄 Login lại</button>
+          <button class="btn btn-logout" onclick="logout()">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingSection" style="display: none;">
+      <div class="card" style="text-align: center; padding: 3rem;">
+        <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 1rem;"></div>
+        <h3>Đang xử lý...</h3>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Đang exchange authorization code lấy tokens</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorSection" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <div class="icon auth0">❌</div>
+          <div>
+            <h3>Đăng nhập thất bại</h3>
+            <p>Có lỗi xảy ra trong quá trình xác thực</p>
+          </div>
+        </div>
+        <div class="alert alert-danger" id="errorMessage">-</div>
+        <button class="btn btn-primary" onclick="loginWithKeycloak()">🔄 Thử lại</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ──────────────────────────────────────────
+    // Keycloak Configuration
+    // ──────────────────────────────────────────
+    const KC_CONFIG = {
+      baseUrl: '',         // Will be loaded from /api/config
+      realm: '',
+      clientId: '',
+      redirectUri: window.location.origin + '/keycloak-login.html',
+    };
+
+    let configLoaded = false;
+
+    // Load config from backend
+    async function loadConfig() {
+      if (configLoaded) return;
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        KC_CONFIG.baseUrl = data.keycloakBaseUrl || 'http://192.168.1.208:8180';
+        KC_CONFIG.realm = data.keycloakRealm || 'ag-ecommerce';
+        KC_CONFIG.clientId = data.keycloakClientId || 'ag-backend';
+        configLoaded = true;
+      } catch (e) {
+        // Fallback to hardcoded defaults
+        KC_CONFIG.baseUrl = 'http://192.168.1.208:8180';
+        KC_CONFIG.realm = 'ag-ecommerce';
+        KC_CONFIG.clientId = 'ag-backend';
+        configLoaded = true;
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // PKCE Helpers
+    // ──────────────────────────────────────────
+    function generateRandomString(length) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+      const array = new Uint8Array(length);
+      crypto.getRandomValues(array);
+      return Array.from(array, b => chars[b % chars.length]).join('');
+    }
+
+    async function generateCodeChallenge(verifier) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(verifier);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return btoa(String.fromCharCode(...new Uint8Array(hash)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // ──────────────────────────────────────────
+    // Login with Keycloak (Authorization Code + PKCE)
+    // ──────────────────────────────────────────
+    async function loginWithKeycloak() {
+      await loadConfig();
+
+      const state = generateRandomString(32);
+      const codeVerifier = generateRandomString(64);
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+      // Store state + verifier for callback
+      sessionStorage.setItem('kc_state', state);
+      sessionStorage.setItem('kc_code_verifier', codeVerifier);
+
+      const authUrl = `${KC_CONFIG.baseUrl}/realms/${KC_CONFIG.realm}/protocol/openid-connect/auth`;
+
+      const params = new URLSearchParams({
+        response_type: 'code',
+        client_id: KC_CONFIG.clientId,
+        redirect_uri: KC_CONFIG.redirectUri,
+        state: state,
+        scope: 'openid profile email',
+        code_challenge: codeChallenge,
+        code_challenge_method: 'S256',
+      });
+
+      // Redirect to Keycloak login page
+      window.location.href = `${authUrl}?${params.toString()}`;
+    }
+
+    // ──────────────────────────────────────────
+    // Handle Callback (exchange code for tokens)
+    // ──────────────────────────────────────────
+    async function handleCallback() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const error = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
+
+      if (error) {
+        showError(`${error}: ${errorDescription || 'Unknown error'}`);
+        return;
+      }
+
+      if (!code) return; // Not a callback, show login page
+
+      // Verify state
+      const savedState = sessionStorage.getItem('kc_state');
+      if (state !== savedState) {
+        showError('State mismatch — có thể bị CSRF attack!');
+        return;
+      }
+
+      const codeVerifier = sessionStorage.getItem('kc_code_verifier');
+
+      // Show loading
+      showSection('loadingSection');
+      updateFlowSteps(5);
+
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      try {
+        // Send code to backend for token exchange
+        const res = await fetch('/api/auth/keycloak/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: code,
+            redirectUri: KC_CONFIG.redirectUri,
+            codeVerifier: codeVerifier,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          displayTokens(data);
+          updateFlowSteps(6);
+        } else {
+          showError(data.message || 'Token exchange failed');
+        }
+      } catch (err) {
+        showError(`Network error: ${err.message}`);
+      } finally {
+        // Clean up session storage
+        sessionStorage.removeItem('kc_state');
+        sessionStorage.removeItem('kc_code_verifier');
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // Display Tokens
+    // ──────────────────────────────────────────
+    function displayTokens(data) {
+      showSection('tokenSection');
+
+      // Parse access token to get user info
+      const tokenPayload = parseJwt(data.access_token);
+
+      const userInfo = document.getElementById('userInfo');
+      userInfo.innerHTML = `
+        <dt>Email</dt><dd>${tokenPayload.email || '-'}</dd>
+        <dt>Username</dt><dd>${tokenPayload.preferred_username || '-'}</dd>
+        <dt>Name</dt><dd>${tokenPayload.name || '-'}</dd>
+        <dt>Realm</dt><dd>${KC_CONFIG.realm}</dd>
+        <dt>Token Type</dt><dd>${data.token_type || 'Bearer'}</dd>
+        <dt>Expires In</dt><dd>${data.expires_in ? data.expires_in + 's' : '-'}</dd>
+      `;
+
+      document.getElementById('kcAccessToken').textContent = data.access_token || '-';
+      document.getElementById('kcRefreshToken').textContent = data.refresh_token || '-';
+
+      // Full response
+      const displayData = { ...data };
+      if (displayData.access_token) {
+        displayData._decoded_access_token = tokenPayload;
+      }
+      document.getElementById('fullResponse').textContent = JSON.stringify(displayData, null, 2);
+    }
+
+    // ──────────────────────────────────────────
+    // JWT Parser
+    // ──────────────────────────────────────────
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return {};
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // UI Helpers
+    // ──────────────────────────────────────────
+    function showSection(sectionId) {
+      ['loginSection', 'tokenSection', 'loadingSection', 'errorSection'].forEach(id => {
+        document.getElementById(id).style.display = id === sectionId ? 'block' : 'none';
+      });
+    }
+
+    function showError(message) {
+      showSection('errorSection');
+      document.getElementById('errorMessage').textContent = '❌ ' + message;
+      updateFlowSteps(0);
+    }
+
+    function updateFlowSteps(activeStep) {
+      for (let i = 1; i <= 6; i++) {
+        const el = document.getElementById(`flowStep${i}`);
+        el.classList.remove('active', 'done');
+        if (i < activeStep) el.classList.add('done');
+        if (i === activeStep) el.classList.add('active');
+      }
+    }
+
+    function copyToken(elementId) {
+      const text = document.getElementById(elementId).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector(`#${elementId}`).parentElement.querySelector('.copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = orig, 1500);
+      });
+    }
+
+    async function logout() {
+      await loadConfig();
+      const logoutUrl = `${KC_CONFIG.baseUrl}/realms/${KC_CONFIG.realm}/protocol/openid-connect/logout`;
+      const params = new URLSearchParams({
+        post_logout_redirect_uri: KC_CONFIG.redirectUri,
+        client_id: KC_CONFIG.clientId,
+      });
+      window.location.href = `${logoutUrl}?${params.toString()}`;
+    }
+
+    // ──────────────────────────────────────────
+    // Init
+    // ──────────────────────────────────────────
+    (async function init() {
+      await loadConfig();
+
+      // Check if this is a callback from Keycloak
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('code') || urlParams.has('error')) {
+        updateFlowSteps(4);
+        await handleCallback();
+      } else {
+        showSection('loginSection');
+        updateFlowSteps(1);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Migration</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo">🔄</div>
+      <span>Migration Tool</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Dashboard</a></li>
+      <li><a href="/register.html">Register</a></li>
+      <li><a href="/login.html">Login Test</a></li>
+      <li><a href="/export.html">Export/Import</a></li>
+      <li><a href="/migrate.html" class="active">Migrate</a></li>
+      <li><a href="/keycloak-login.html">Keycloak Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="container fade-in">
+    <div class="page-header">
+      <h1>Password Migration</h1>
+      <p>Đăng nhập để đồng bộ password từ Auth0 sang Keycloak</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card purple">
+        <div class="stat-value" id="totalStat">-</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-value" id="migratedStat">-</div>
+        <div class="stat-label">Migrated</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-value" id="pendingStat">-</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+
+    <!-- Migration Login Form -->
+    <div class="card">
+      <div class="card-header">
+        <div class="icon migrate">🔄</div>
+        <div>
+          <h3>Migration Login</h3>
+          <p>Đăng nhập bằng tài khoản Auth0 → password sẽ được đồng bộ sang Keycloak</p>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        ℹ️ Khi user đăng nhập ở đây, hệ thống sẽ:<br>
+        1. Xác thực email/password với Auth0<br>
+        2. Nếu đúng → tìm user trong Keycloak → set password<br>
+        3. User có thể login bằng Keycloak với cùng password
+      </div>
+
+      <div id="alertContainer"></div>
+
+      <form id="migrateForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" class="form-control" id="email" placeholder="user@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Mật khẩu</label>
+          <input type="password" class="form-control" id="password" placeholder="Nhập mật khẩu Auth0" required>
+        </div>
+        <button type="submit" class="btn btn-success" id="submitBtn">
+          <span id="btnText">🔄 Migrate Password</span>
+          <div id="btnSpinner" class="spinner" style="display:none"></div>
+        </button>
+      </form>
+    </div>
+
+    <!-- Migration History -->
+    <div class="card">
+      <div class="card-header">
+        <div class="icon keycloak">📊</div>
+        <div>
+          <h3>Migration History</h3>
+          <p>Danh sách users đã migrate password</p>
+        </div>
+      </div>
+      <button class="btn btn-outline" onclick="loadStatus()" style="margin-bottom: 1rem;">🔄 Refresh</button>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Keycloak ID</th>
+              <th>Password</th>
+              <th>Migrated At</th>
+            </tr>
+          </thead>
+          <tbody id="statusBody">
+            <tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('migrateForm');
+    const alertContainer = document.getElementById('alertContainer');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    function showAlert(type, message) {
+      alertContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    }
+
+    function setLoading(loading) {
+      submitBtn.disabled = loading;
+      btnText.style.display = loading ? 'none' : 'inline';
+      btnSpinner.style.display = loading ? 'inline-block' : 'none';
+    }
+
+    // Migration form submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertContainer.innerHTML = '';
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/migration/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+          }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('success', `✅ ${data.message}`);
+          form.reset();
+          loadStatus();
+        } else {
+          showAlert('danger', `❌ ${data.message}`);
+        }
+      } catch (err) {
+        showAlert('danger', `❌ Error: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Load migration status
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/migration/status');
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('totalStat').textContent = data.total;
+          document.getElementById('migratedStat').textContent = data.migrated;
+          document.getElementById('pendingStat').textContent = data.pending;
+
+          const tbody = document.getElementById('statusBody');
+          if (data.records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Chưa có user nào được migrate</td></tr>';
+          } else {
+            tbody.innerHTML = data.records.map(r => `
+              <tr>
+                <td>${r.email}</td>
+                <td style="font-family: monospace; font-size: 0.75rem;">${r.keycloak_user_id || '-'}</td>
+                <td>${r.password_migrated ? '<span class="badge badge-success">✓ Done</span>' : '<span class="badge badge-pending">Pending</span>'}</td>
+                <td>${r.migrated_at ? new Date(r.migrated_at).toLocaleString() : '-'}</td>
+              </tr>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load status:', err);
+      }
+    }
+
+    // Load on page open
+    loadStatus();
+  </script>
+</body>
+</html>

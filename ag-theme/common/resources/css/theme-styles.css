@@ -1,0 +1,34 @@
+:root {
+  --keycloak-bg-logo-url: none;
+  --keycloak-logo-url: url("../img/logo.png");
+  --keycloak-logo-height: 52px;
+  --keycloak-logo-width: 52px;
+
+  --color-primary: #635dff;
+  --color-primary-hover: #1d4ed8;
+  --color-text: #1e293b;
+  --color-text-light: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-border: #cbd5e1;
+  --color-bg: #fff;
+  --color-error: #dc2626;
+
+  --pf-v5-global--primary-color--100: var(--color-primary);
+  --pf-v5-global--active-color--100: var(--color-primary);
+  --pf-v5-global--link--Color: var(--color-primary);
+  --pf-v5-global--link--Color--hover: var(--color-primary-hover);
+  --pf-v5-global--danger-color--100: #dc3545;
+  --pf-v5-global--success-color--100: #16a34a;
+  --pf-v5-global--BackgroundColor--light-100: #ffffff;
+  --pf-v5-global--BackgroundColor--dark-300: #1e293b;
+  --pf-v5-global--BackgroundColor--dark-100: #0f172a;
+  --pf-v5-global--Color--100: var(--color-text);
+  --pf-v5-global--Color--light-100: #ffffff;
+  --pf-v5-global--Color--dark-100: var(--color-text);
+}
+
+/* Alert variants */
+html .pf-v5-c-alert.pf-m-success { background: #f0fdf4; color: #15803d; }
+html .pf-v5-c-alert.pf-m-warning { background: #fffbeb; color: #92400e; }
+html .pf-v5-c-alert.pf-m-danger  { background: #fef2f2; color: var(--color-error); }
+html .pf-v5-c-alert.pf-m-info    { background: #eff6ff; color: #1d4ed8; }

@@ -1,0 +1,20 @@
+{
+  "light": {
+    "danger-color--100": "#dc3545",
+    "success-color--100": "#16a34a",
+    "active-color--100": "#2563eb",
+    "primary-color--100": "#2563eb",
+    "link--Color": "#2563eb",
+    "link--Color--hover": "#1d4ed8",
+    "BackgroundColor--light-100": "#ffffff",
+    "BackgroundColor--dark-300": "#1e293b",
+    "BackgroundColor--dark-100": "#0f172a",
+    "Color--100": "#1e293b",
+    "Color--light-100": "#ffffff",
+    "Color--dark-100": "#1e293b"
+  },
+  "favicon": "theme/ag-theme/common/resources/img/logo.png",
+  "logo": "theme/ag-theme/common/resources/img/logo.png",
+  "bgimage": "",
+  "name": "ag-theme.jar"
+}

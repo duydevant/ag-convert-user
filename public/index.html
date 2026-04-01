@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth0 → Keycloak Migration Tool</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo">🔄</div>
+      <span>Migration Tool</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/" class="active">Dashboard</a></li>
+      <li><a href="/register.html">Register</a></li>
+      <li><a href="/login.html">Login Test</a></li>
+      <li><a href="/export.html">Export/Import</a></li>
+      <li><a href="/migrate.html">Migrate</a></li>
+      <li><a href="/keycloak-login.html">Keycloak Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="container fade-in">
+    <div class="page-header">
+      <h1>Auth0 → Keycloak Migration</h1>
+      <p>Công cụ chuyển đổi user từ Auth0 sang Keycloak với password migration</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step" id="step1">
+        <div class="step-number">1</div>
+        <div class="step-label">Tạo Users (Auth0)</div>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-number">2</div>
+        <div class="step-label">Export & Import</div>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-number">3</div>
+        <div class="step-label">Migrate Password</div>
+      </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="cards-grid">
+      <a href="/register.html" class="dashboard-card card">
+        <div class="card-body">
+          <div class="card-icon red">👤</div>
+          <div class="card-info">
+            <h3>Register User</h3>
+            <p>Tạo tài khoản test trên Auth0 để kiểm tra migration flow</p>
+          </div>
+        </div>
+      </a>
+
+      <a href="/login.html" class="dashboard-card card">
+        <div class="card-body">
+          <div class="card-icon purple">🔑</div>
+          <div class="card-info">
+            <h3>Login Test</h3>
+            <p>Test đăng nhập với Auth0 để xác nhận tài khoản hoạt động</p>
+          </div>
+        </div>
+      </a>
+
+      <a href="/export.html" class="dashboard-card card">
+        <div class="card-body">
+          <div class="card-icon orange">📤</div>
+          <div class="card-info">
+            <h3>Export & Import</h3>
+            <p>Export users từ Auth0 và import vào Keycloak (không có password)</p>
+          </div>
+        </div>
+      </a>
+
+      <a href="/migrate.html" class="dashboard-card card">
+        <div class="card-body">
+          <div class="card-icon green">🔄</div>
+          <div class="card-info">
+            <h3>Password Migration</h3>
+            <p>User đăng nhập → xác thực Auth0 → đồng bộ password sang Keycloak</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- How it works -->
+    <div class="card" style="margin-top: 1rem;">
+      <div class="card-header">
+        <div class="icon migrate">ℹ️</div>
+        <div>
+          <h3>Cách hoạt động</h3>
+          <p>Flow chuyển đổi user từ Auth0 sang Keycloak</p>
+        </div>
+      </div>
+      <div style="color: var(--text-secondary); font-size: 0.875rem; line-height: 1.8;">
+        <p><strong>Bước 1:</strong> Tạo users test trên Auth0 (hoặc dùng users có sẵn)</p>
+        <p><strong>Bước 2:</strong> Export tất cả users từ Auth0 → Import vào Keycloak (chỉ thông tin, không có password)</p>
+        <p><strong>Bước 3:</strong> Cho users login qua Migration form → Backend xác thực với Auth0 → Nếu đúng → Set password vào Keycloak</p>
+        <p style="margin-top: 0.75rem; color: var(--success);">✅ Sau khi migrate, user có thể login bằng Keycloak với cùng email/password</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,488 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
+* {
+  font-family:
+    "Inter",
+    -apple-system,
+    sans-serif;
+  box-sizing: border-box;
+}
+
+.login-pf body {
+  background: #f6f6f6 url("../img/bg-signin.svg") center/cover no-repeat;
+  height: 100%;
+}
+
+#kc-header,
+.subtitle,
+div.kc-logo-text span,
+#kc-form-login .pf-v5-c-form__label,
+#kc-register-form .pf-v5-c-form__label,
+#kc-reset-password-form .pf-v5-c-form__label,
+#kc-passwd-update-form .pf-v5-c-form__label,
+html .pf-v5-c-form-control::before,
+html .pf-v5-c-form-control::after,
+html .pf-v5-c-button.pf-m-control::after,
+#kc-social-providers a.pf-v5-c-button::after,
+#kc-social-providers a.pf-v5-c-button::before,
+html .pf-v5-c-alert::before,
+html .pf-v5-c-alert__icon {
+  display: none;
+}
+
+/* Layout */
+html .pf-v5-c-login__container {
+  grid-template-columns: 420px;
+  grid-template-areas: "main";
+}
+html .pf-v5-c-login {
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 10vh;
+}
+html .pf-v5-c-login__main {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Logo */
+html .pf-v5-c-login__main-header::before {
+  content: "";
+  display: block;
+  background: var(--keycloak-logo-url) center/contain no-repeat;
+  height: var(--keycloak-logo-height);
+  width: var(--keycloak-logo-width);
+  margin: 0 auto 8px;
+}
+
+/* Card sections */
+html .pf-v5-c-login__main-header {
+  padding: 40px 32px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+html .pf-v5-c-login__main-body {
+  padding: 8px 40px 20px;
+}
+html .pf-v5-c-login__main-footer {
+  padding-bottom: 0;
+}
+
+/* Title & Subtitle */
+html .pf-v5-c-login__main-header .pf-v5-c-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 200;
+  color: var(--color-text);
+  margin-top: 8px;
+}
+.login-subtitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  color: black;
+  margin-top: 8px;
+}
+
+/* Floating label */
+.floating-label-group,
+.floating-label-group .pf-v5-c-input-group {
+  position: relative;
+}
+
+.floating-label {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transition: all 0.15s ease;
+  z-index: 1;
+  padding: 0 4px;
+}
+
+/* Float up on focus/filled */
+.floating-label-group input:focus ~ .floating-label,
+.floating-label-group input:not(:placeholder-shown) ~ .floating-label,
+.floating-label-group .pf-v5-c-input-group:has(input:focus) > .floating-label,
+.floating-label-group
+  .pf-v5-c-input-group
+  > input:not(:placeholder-shown)
+  ~ .floating-label {
+  top: 0;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--color-text-light);
+  background: var(--color-bg);
+}
+
+.floating-label-group input:focus ~ .floating-label,
+.floating-label-group .pf-v5-c-input-group:has(input:focus) > .floating-label {
+  color: var(--color-primary);
+}
+
+.floating-label-group input:focus {
+  border-color: var(--color-primary);
+}
+
+.floating-label-group
+  .pf-v5-c-input-group:has(input:focus)
+  .pf-v5-c-form-control,
+.floating-label-group
+  .pf-v5-c-input-group:has(input:focus)
+  .pf-v5-c-button.pf-m-control {
+  border-color: var(--color-primary);
+}
+
+/* Form controls */
+html .pf-v5-c-form-control {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  outline: none;
+  box-shadow: none;
+  font-size: 14px;
+  background: var(--color-bg);
+  height: 52px;
+  padding: 0 12px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+
+html .pf-v5-c-form-control > input {
+  border: none;
+  background: transparent;
+  outline: none;
+  height: 100%;
+  width: 100%;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+/* Autofill override */
+html .pf-v5-c-form-control > input:-webkit-autofill,
+html .pf-v5-c-form-control > input:-webkit-autofill:hover,
+html .pf-v5-c-form-control > input:-webkit-autofill:focus,
+input.pf-v5-c-form-control:-webkit-autofill,
+input.pf-v5-c-form-control:-webkit-autofill:hover,
+input.pf-v5-c-form-control:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg) inset;
+  -webkit-text-fill-color: var(--color-text);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+html .pf-v5-c-form-control:focus,
+html .pf-v5-c-form-control:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+html .pf-v5-c-form__group {
+  margin-bottom: 12px;
+}
+
+/* Error states */
+.floating-label-group input[aria-invalid="true"],
+.floating-label-group
+  .pf-v5-c-input-group:has(input[aria-invalid="true"])
+  .pf-v5-c-form-control,
+.floating-label-group
+  .pf-v5-c-input-group:has(input[aria-invalid="true"])
+  .pf-v5-c-button.pf-m-control {
+  border-color: var(--color-error);
+}
+.floating-label-group input[aria-invalid="true"] ~ .floating-label,
+.floating-label-group
+  .pf-v5-c-input-group:has(input[aria-invalid="true"])
+  > .floating-label {
+  color: var(--color-error);
+}
+.floating-label-group .pf-m-error,
+.floating-label-group .kc-feedback-text {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.floating-label-group .pf-v5-c-form-control {
+  position: relative;
+}
+.floating-label-group > .floating-label {
+  top: 26px;
+  transform: translateY(-50%);
+}
+.floating-label-group > input:focus ~ .floating-label,
+.floating-label-group > input:not(:placeholder-shown) ~ .floating-label {
+  top: 0;
+}
+
+/* Input group (password) */
+html .pf-v5-c-input-group {
+  display: flex;
+  align-items: stretch;
+}
+html .pf-v5-c-input-group .pf-v5-c-form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+  flex: 1;
+  outline: none;
+}
+
+html .pf-v5-c-button.pf-m-control {
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  min-width: 42px;
+  outline: none;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+html .pf-v5-c-button.pf-m-control:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--color-border);
+}
+html .pf-v5-c-button.pf-m-control .fa {
+  font-size: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+}
+
+/* Checkbox */
+html body .pf-v5-c-check,
+html body label.pf-v5-c-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+html body label.pf-v5-c-check .pf-v5-c-check__input,
+html
+  body
+  div.pf-v5-c-check
+  label.pf-v5-c-check
+  input[type="checkbox"].pf-v5-c-check__input {
+  all: revert;
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+html body label.pf-v5-c-check .pf-v5-c-check__label,
+html body div.pf-v5-c-check label.pf-v5-c-check span.pf-v5-c-check__label {
+  font-size: 13px;
+  color: var(--color-text-light);
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Buttons */
+html .pf-v5-c-button.pf-m-primary {
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+html .pf-v5-c-button.pf-m-primary:hover,
+html .pf-v5-c-button.pf-m-primary:focus {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Links */
+html .pf-v5-c-button.pf-m-link {
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+html .pf-v5-c-button.pf-m-link:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+#kc-form-login a[href*="reset-credentials"] {
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+#kc-registration-container {
+  display: flex;
+  justify-content: center;
+}
+#kc-registration,
+#kc-registration-container {
+  text-align: left;
+  font-size: 13px;
+  color: var(--color-text-light);
+}
+#kc-registration a,
+#kc-registration-container a {
+  font-weight: 600;
+  text-decoration: none;
+}
+#kc-form-login a[href*="reset-credentials"]:hover,
+#kc-registration a:hover,
+#kc-registration-container a:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+html body .pf-v5-c-helper-text {
+  align-items: center;
+}
+.pf-v5-c-helper-text__item {
+  font-size: 12px;
+}
+
+/* Social login */
+#kc-social-providers ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 8px;
+}
+#kc-social-providers ul li {
+  flex: 1;
+}
+#kc-social-providers a.pf-v5-c-button {
+  height: 40px;
+  padding: 0 16px;
+  gap: 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 10px;
+  background: var(--color-bg);
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+#kc-social-providers a.pf-v5-c-button:hover,
+#kc-social-providers a.pf-v5-c-button:focus {
+  background: var(--color-bg);
+  border-color: #e2e8f0;
+  color: #374151;
+  box-shadow: none;
+}
+#kc-social-providers svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+html .pf-v5-c-login__main-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+html .pf-v5-c-login__main-footer-links-item {
+  width: 100%;
+}
+hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 12px 0;
+}
+html .pf-v5-c-login__main-footer-band {
+  padding-bottom: 0;
+  font-size: 13px;
+  border-top: none;
+}
+
+/* Alerts (variants in theme-styles.css) */
+html .pf-v5-c-alert {
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 10px 14px;
+  box-shadow: none;
+}
+html .pf-v5-c-alert__title {
+  font-weight: 500;
+}
+
+/* Tooltip */
+.kc-login-tooltip {
+  position: relative;
+  display: inline-block;
+}
+.kc-login-tooltip .kc-tooltip-text {
+  top: -3px;
+  left: 160%;
+  background-color: var(--color-text);
+  visibility: hidden;
+  color: #fff;
+  min-width: 130px;
+  text-align: center;
+  border-radius: 4px;
+  padding: 6px 10px;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 12px;
+}
+.kc-login-tooltip:hover .kc-tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+.kc-login-tooltip .kc-tooltip-text::after {
+  content: " ";
+  position: absolute;
+  top: 15px;
+  right: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent var(--color-text) transparent transparent;
+}
+
+#kc-recovery-codes-list {
+  columns: 2;
+}
+#certificate_subjectDN {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 480px) {
+  html .pf-v5-c-login__container {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  html .pf-v5-c-login__main {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  html .pf-v5-c-login__main-header,
+  html .pf-v5-c-login__main-body,
+  html .pf-v5-c-login__main-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .login-pf body,
+  html .pf-v5-c-login {
+    background: #fff;
+    background-image: none;
+  }
+}

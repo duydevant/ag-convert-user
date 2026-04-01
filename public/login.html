@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Test - Auth0</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo">🔄</div>
+      <span>Migration Tool</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Dashboard</a></li>
+      <li><a href="/register.html">Register</a></li>
+      <li><a href="/login.html" class="active">Login Test</a></li>
+      <li><a href="/export.html">Export/Import</a></li>
+      <li><a href="/migrate.html">Migrate</a></li>
+      <li><a href="/keycloak-login.html">Keycloak Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="container fade-in">
+    <div class="page-header">
+      <h1>Login Test (Auth0)</h1>
+      <p>Test đăng nhập với Auth0 để xác nhận tài khoản hoạt động đúng</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon auth0">🔑</div>
+        <div>
+          <h3>Đăng nhập Auth0</h3>
+          <p>Xác thực bằng Resource Owner Password Grant</p>
+        </div>
+      </div>
+
+      <div id="alertContainer"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" class="form-control" id="email" placeholder="user@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Mật khẩu</label>
+          <input type="password" class="form-control" id="password" placeholder="Nhập mật khẩu" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <span id="btnText">Đăng nhập</span>
+          <div id="btnSpinner" class="spinner" style="display:none"></div>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const alertContainer = document.getElementById('alertContainer');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    function showAlert(type, message) {
+      alertContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    }
+
+    function setLoading(loading) {
+      submitBtn.disabled = loading;
+      btnText.style.display = loading ? 'none' : 'inline';
+      btnSpinner.style.display = loading ? 'inline-block' : 'none';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertContainer.innerHTML = '';
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+          }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('success', `✅ ${data.message}`);
+        } else {
+          showAlert('danger', `❌ ${data.message}`);
+        }
+      } catch (err) {
+        showAlert('danger', `❌ Error: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>

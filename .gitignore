@@ -1,0 +1,42 @@
+# ──── Node.js ────
+node_modules/
+dist/
+.npm
+*.tsbuildinfo
+
+# ──── Environment ────
+.env
+.env.*
+!.env.example
+
+# ──── IDE ────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ──── OS ────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ──── Java / Maven (keycloak-spi) ────
+keycloak-spi/target/
+*.class
+*.jar
+!keycloak-spi/src/**
+
+# ──── Docker ────
+keycloak_data/
+
+# ──── Logs ────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ──── Test / Coverage ────
+coverage/
+.nyc_output/

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export & Import Users</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo">🔄</div>
+      <span>Migration Tool</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Dashboard</a></li>
+      <li><a href="/register.html">Register</a></li>
+      <li><a href="/login.html">Login Test</a></li>
+      <li><a href="/export.html" class="active">Export/Import</a></li>
+      <li><a href="/migrate.html">Migrate</a></li>
+      <li><a href="/keycloak-login.html">Keycloak Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="container fade-in">
+    <div class="page-header">
+      <h1>Export & Import Users</h1>
+      <p>Export users từ Auth0 và import vào Keycloak (không có password)</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active" id="stepExport">
+        <div class="step-number">1</div>
+        <div class="step-label">Export từ Auth0</div>
+      </div>
+      <div class="step" id="stepImport">
+        <div class="step-number">2</div>
+        <div class="step-label">Import vào Keycloak</div>
+      </div>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Export Section -->
+    <div class="card" id="exportCard">
+      <div class="card-header">
+        <div class="icon export">📤</div>
+        <div>
+          <h3>Export Users từ Auth0</h3>
+          <p>Lấy tất cả users từ Auth0 Management API</p>
+        </div>
+      </div>
+      <button class="btn btn-warning" id="exportBtn" onclick="exportUsers()">
+        <span id="exportBtnText">📤 Export Users</span>
+        <div id="exportSpinner" class="spinner" style="display:none"></div>
+      </button>
+
+      <div id="exportResult" style="display:none;">
+        <div class="stats-row" style="margin-top:1rem;">
+          <div class="stat-card purple">
+            <div class="stat-value" id="totalUsers">0</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="data-table" id="usersTable">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Verified</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+
+        <details style="margin-top: 1rem;">
+          <summary style="cursor:pointer; color: var(--text-muted); font-size: 0.85rem;">📋 Raw JSON</summary>
+          <div class="json-viewer" id="jsonViewer"></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Import Section -->
+    <div class="card" id="importCard" style="display:none;">
+      <div class="card-header">
+        <div class="icon keycloak">📥</div>
+        <div>
+          <h3>Import vào Keycloak</h3>
+          <p>Tạo users trong Keycloak (không có password)</p>
+        </div>
+      </div>
+      <div class="alert alert-warning">
+        ⚠️ Users sẽ được tạo trong Keycloak <strong>KHÔNG CÓ PASSWORD</strong>. Sau khi import, sử dụng trang Migrate để đồng bộ password.
+      </div>
+      <button class="btn btn-success" id="importBtn" onclick="importUsers()">
+        <span id="importBtnText">📥 Import vào Keycloak</span>
+        <div id="importSpinner" class="spinner" style="display:none"></div>
+      </button>
+
+      <div id="importResult" style="display:none; margin-top:1rem;"></div>
+    </div>
+  </div>
+
+  <script>
+    let exportedUsers = [];
+
+    function showAlert(type, message) {
+      document.getElementById('alertContainer').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    }
+
+    async function exportUsers() {
+      const btn = document.getElementById('exportBtn');
+      const text = document.getElementById('exportBtnText');
+      const spinner = document.getElementById('exportSpinner');
+
+      btn.disabled = true;
+      text.style.display = 'none';
+      spinner.style.display = 'inline-block';
+
+      try {
+        const res = await fetch('/api/migration/export');
+        const data = await res.json();
+
+        if (data.success) {
+          exportedUsers = data.users;
+          document.getElementById('totalUsers').textContent = data.total;
+
+          // Populate table
+          const tbody = document.getElementById('usersBody');
+          tbody.innerHTML = data.users.map(u => `
+            <tr>
+              <td>${u.email}</td>
+              <td>${u.name || '-'}</td>
+              <td>${u.email_verified ? '<span class="badge badge-success">✓</span>' : '<span class="badge badge-pending">✗</span>'}</td>
+              <td>${new Date(u.created_at).toLocaleDateString()}</td>
+            </tr>
+          `).join('');
+
+          document.getElementById('jsonViewer').textContent = JSON.stringify(data.users, null, 2);
+          document.getElementById('exportResult').style.display = 'block';
+
+          // Show import card
+          document.getElementById('importCard').style.display = 'block';
+
+          // Update steps
+          document.getElementById('stepExport').classList.add('done');
+          document.getElementById('stepExport').classList.remove('active');
+          document.getElementById('stepImport').classList.add('active');
+
+          showAlert('success', `✅ Exported ${data.total} users từ Auth0`);
+        } else {
+          showAlert('danger', `❌ ${data.message}`);
+        }
+      } catch (err) {
+        showAlert('danger', `❌ Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        text.style.display = 'inline';
+        spinner.style.display = 'none';
+      }
+    }
+
+    async function importUsers() {
+      if (exportedUsers.length === 0) {
+        showAlert('warning', '⚠️ Chưa có dữ liệu export. Hãy export trước.');
+        return;
+      }
+
+      const btn = document.getElementById('importBtn');
+      const text = document.getElementById('importBtnText');
+      const spinner = document.getElementById('importSpinner');
+
+      btn.disabled = true;
+      text.style.display = 'none';
+      spinner.style.display = 'inline-block';
+
+      try {
+        const res = await fetch('/api/migration/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ users: exportedUsers }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          const resultDiv = document.getElementById('importResult');
+          resultDiv.style.display = 'block';
+          resultDiv.innerHTML = `
+            <div class="stats-row">
+              <div class="stat-card green">
+                <div class="stat-value">${data.imported}</div>
+                <div class="stat-label">Imported</div>
+              </div>
+              <div class="stat-card orange">
+                <div class="stat-value">${data.failed}</div>
+                <div class="stat-label">Failed</div>
+              </div>
+            </div>
+            <div class="alert alert-success">
+              ✅ Import hoàn tất! Vào trang <a href="/migrate.html" style="color: var(--success); font-weight: 600;">Migrate</a> để đồng bộ password.
+            </div>
+          `;
+
+          document.getElementById('stepImport').classList.add('done');
+          document.getElementById('stepImport').classList.remove('active');
+        } else {
+          showAlert('danger', `❌ ${data.message}`);
+        }
+      } catch (err) {
+        showAlert('danger', `❌ Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        text.style.display = 'inline';
+        spinner.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
