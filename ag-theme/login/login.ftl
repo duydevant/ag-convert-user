@@ -76,6 +76,7 @@
                             document.head.appendChild(fa);
                         })();
                     </script>
+                    <script type="module" src="${url.resourcesPath}/js/passwordVisibility.js"></script>
                 </#if>
             </div>
         </div>

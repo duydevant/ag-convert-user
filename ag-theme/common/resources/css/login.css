@@ -266,7 +266,7 @@ html .pf-v5-c-button.pf-m-control:focus {
   border-color: var(--color-border);
 }
 html .pf-v5-c-button.pf-m-control .fa {
-  font-size: 0;
+  font-size: 16px;
   width: 18px;
   height: 18px;
   display: inline-block;
