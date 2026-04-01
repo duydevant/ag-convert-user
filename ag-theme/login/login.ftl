@@ -64,10 +64,10 @@
                         </div>
                         <div id="kc-form-buttons" class="${properties.kcFormGroupClass!}" style="margin-top: 8px;">
                             <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
-                            <input tabindex="4" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
+                            <input tabindex="4" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("logIn")}"/>
                         </div>
                     </form>
-                    <script>document.title = "Sign in | ${realm.displayName!realm.name}";</script>
+                    <script>document.title = "Log in | ${realm.displayName!realm.name}";</script>
                 </#if>
             </div>
         </div>

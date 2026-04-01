@@ -107,7 +107,7 @@
                 <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
                     <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegister")}"/>
                 </div>
-                <div id="kc-form-options" style="text-align: center; margin-top: 16px; font-size: 13px; color: #64748b;">
+                <div id="kc-form-options" style="text-align: left; margin-top: 16px; font-size: 14px; color: var(--color-text);">
                     <span>${msg("alreadyHaveAccount")} <a href="${url.loginUrl}" style="font-weight: 600; text-decoration: none;">${msg("doLogIn")}</a></span>
                 </div>
             </div>
