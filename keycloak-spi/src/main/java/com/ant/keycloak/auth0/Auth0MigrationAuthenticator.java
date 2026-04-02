@@ -14,6 +14,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
 import static org.keycloak.services.validation.Validation.FIELD_PASSWORD;
+import static org.keycloak.services.validation.Validation.FIELD_USERNAME;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -85,8 +86,16 @@ public class Auth0MigrationAuthenticator extends UsernamePasswordForm {
             LOG.infof("[Auth0 Migration] User %s exists but not migrated, trying Keycloak then Auth0", username);
 
             // Try Keycloak password first (in case password was set via import API)
-            boolean keycloakValid = user.credentialManager()
-                    .isValid(UserCredentialModel.password(password));
+            // Wrapped in try-catch because stored credentials may have corrupted/incompatible
+            // hash metadata (e.g., Argon2 params missing → NumberFormatException)
+            boolean keycloakValid = false;
+            try {
+                keycloakValid = user.credentialManager()
+                        .isValid(UserCredentialModel.password(password));
+            } catch (Exception e) {
+                LOG.warnf("[Auth0 Migration] Keycloak password validation threw exception for %s: %s — will try Auth0",
+                        username, e.getMessage());
+            }
             if (keycloakValid) {
                 LOG.infof("[Auth0 Migration] Keycloak password valid for %s, marking as migrated", username);
                 user.setSingleAttribute(ATTR_MIGRATED, "true");
@@ -225,15 +234,20 @@ public class Auth0MigrationAuthenticator extends UsernamePasswordForm {
     }
 
     /**
-     * Show authentication failure (invalid credentials error page)
+     * Show authentication failure (invalid credentials error page).
+     * Handles both cases: user exists (wrong password) and user not found.
      */
     private void failAuthentication(AuthenticationFlowContext context, UserModel user) {
         if (user != null) {
             context.getEvent().user(user);
+            context.getEvent().error(Errors.INVALID_USER_CREDENTIALS);
+            Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_PASSWORD);
+            context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challengeResponse);
+        } else {
+            context.getEvent().error(Errors.USER_NOT_FOUND);
+            Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
+            context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
         }
-        context.getEvent().error(Errors.INVALID_USER_CREDENTIALS);
-        Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_PASSWORD);
-        context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challengeResponse);
         context.clearUser();
     }
 

@@ -13,7 +13,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { KeycloakService } from './keycloak.service';
-import { ImportBcryptUserDto } from '../dto/auth.dto';
+import { ImportBcryptUserDto, ImportArgon2UserDto } from '../dto/auth.dto';
 
 @ApiTags('Keycloak')
 @Controller('api')
@@ -142,6 +142,101 @@ export class KeycloakController {
 
       const result =
         await this.keycloakService.importUsersWithBcryptHash(body);
+
+      return {
+        success: true,
+        message: `Import completed: ${result.imported} imported, ${result.failed} failed`,
+        ...result,
+      };
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        {
+          success: false,
+          message: error.response?.data?.message || error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * POST /api/keycloak/import-argon2-users
+   * Import users with pre-hashed argon2 passwords into Keycloak.
+   * Keycloak 25+ supports this natively.
+   */
+  // @UseGuards(Auth0Guard)
+  // @ApiBearerAuth('Auth0Token')
+  @Post('keycloak/import-argon2-users')
+  @ApiOperation({
+    summary: 'Import users với mật khẩu đã hash Argon2',
+    description: 'Tạo users trong Keycloak với mật khẩu đã được hash Argon2 (từ Node.js hoặc hệ thống khác).',
+  })
+  @ApiBody({
+    type: [ImportArgon2UserDto],
+    description: 'Array of users with Argon2 credentials',
+    examples: {
+      example1: {
+        summary: 'Import 1 user với Argon2 hash',
+        value: [
+          {
+            username: 'duyvq.dev@ant-group.net',
+            email: 'duyvq.dev@ant-group.net',
+            firstName: 'Duy',
+            lastName: 'Vũ Quang',
+            enabled: true,
+            credentials: [
+              {
+                type: 'password',
+                algorithm: 'argon2',
+                hashedSaltedValue: '$argon2id$v=19$m=65536,t=2,p=1$YW50Z3JvdXBtaWdyYXRpb24$YourHashValue...',
+                additionalParameters: {
+                  hashIterations: '2',
+                  memory: '65536',
+                  parallelism: '1',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Import thành công',
+    schema: {
+      example: {
+        success: true,
+        message: 'Import completed: 1 imported, 0 failed',
+        imported: 1,
+        skipped: 0,
+        failed: 0,
+        details: [
+          {
+            username: 'duyvq.dev@ant-group.net',
+            email: 'duyvq.dev@ant-group.net',
+            success: true,
+            userId: 'uuid-here',
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  async importArgon2Users(@Body() body: ImportArgon2UserDto[]) {
+    try {
+      if (!Array.isArray(body) || body.length === 0) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'Request body must be a non-empty array of users with Argon2 credentials',
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const result = await this.keycloakService.importUsersWithArgon2Hash(body);
 
       return {
         success: true,

@@ -79,3 +79,48 @@ export class ImportBcryptUserDto {
   credentials: ImportBcryptUserCredentialDto[];
 }
 
+
+
+export class ImportArgon2UserCredentialDto {
+  @ApiProperty({ example: 'password' })
+  type: string;
+
+  @ApiProperty({ example: 'argon2' })
+  algorithm: string;
+
+  @ApiProperty({
+    example: '$argon2id$v=19$m=65536,t=2,p=1$YW50Z3JvdXBtaWdyYXRpb24...',
+    description: 'Argon2 hashed password',
+  })
+  hashedSaltedValue: string;
+
+  @ApiPropertyOptional({
+    example: { hashIterations: '2', memory: '65536', parallelism: '1' },
+    description: 'Additional parameters for Argon2',
+  })
+  additionalParameters?: Record<string, any>;
+}
+
+export class ImportArgon2UserDto {
+  @ApiProperty({ example: 'duyvq.dev@ant-group.net' })
+  username: string;
+
+  @ApiProperty({ example: 'duyvq.dev@ant-group.net' })
+  email: string;
+
+  @ApiPropertyOptional({ example: true })
+  enabled?: boolean;
+
+  @ApiPropertyOptional({ example: 'Duy' })
+  firstName?: string;
+
+  @ApiPropertyOptional({ example: 'Vu Quang' })
+  lastName?: string;
+
+  @ApiProperty({
+    type: [ImportArgon2UserCredentialDto],
+    description: 'Argon2 credential array',
+  })
+  credentials: ImportArgon2UserCredentialDto[];
+}
+

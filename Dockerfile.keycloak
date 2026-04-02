@@ -1,5 +1,5 @@
 # ──────────────────────────────────────
-# Stage 1: Build the SPI JAR with Maven
+# Stage 1: Build the SPI JAR with Maven (Thin JAR)
 # ──────────────────────────────────────
 FROM maven:3.9-eclipse-temurin-17 AS builder
 
@@ -21,20 +21,18 @@ RUN curl -L -o /tmp/keycloak-bcrypt-1.6.0.jar \
 # ──────────────────────────────────────
 # Stage 3: Keycloak with SPI + Bcrypt + Theme
 # ──────────────────────────────────────
-FROM quay.io/keycloak/keycloak:24.0.4
+FROM quay.io/keycloak/keycloak:25.0.0
 
-# Copy the SPI JAR into Keycloak's providers directory
-COPY --from=builder /build/target/auth0-migration-spi.jar /opt/keycloak/providers/
-
-# Bcrypt provider for $2b$ hash support (Node.js bcrypt compatibility)
-COPY --from=downloader /tmp/keycloak-bcrypt-1.6.0.jar /opt/keycloak/providers/
+# Copy providers with correct ownership
+COPY --from=builder --chown=keycloak:keycloak /build/target/auth0-migration-spi.jar /opt/keycloak/providers/
+COPY --from=downloader --chown=keycloak:keycloak /tmp/keycloak-bcrypt-1.6.0.jar /opt/keycloak/providers/
 
 # Custom ag-theme
 COPY --chown=keycloak:keycloak ag-theme/ /opt/keycloak/themes/ag-theme/
 COPY --chown=keycloak:keycloak META-INF/keycloak-themes.json /opt/keycloak/providers/META-INF/keycloak-themes.json
 COPY --chown=keycloak:keycloak theme-settings.json /opt/keycloak/themes/ag-theme/theme-settings.json
 
-# Build Keycloak with the new providers
+# Build Keycloak with the new providers (Quarkus re-augmentation)
 RUN /opt/keycloak/bin/kc.sh build
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]

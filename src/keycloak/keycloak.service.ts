@@ -6,6 +6,7 @@ import axios from 'axios';
 export class KeycloakService {
   private readonly logger = new Logger(KeycloakService.name);
   private readonly baseUrl: string;
+  private readonly publicBaseUrl: string;
   private readonly realm: string;
   private readonly clientId: string;
   private readonly clientSecret: string;
@@ -18,6 +19,7 @@ export class KeycloakService {
 
   constructor(private configService: ConfigService) {
     this.baseUrl = this.configService.get<string>('KEYCLOAK_BASE_URL')!;
+    this.publicBaseUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL') || this.baseUrl;
     this.realm = this.configService.get<string>('KEYCLOAK_REALM')!;
     this.clientId = this.configService.get<string>('KEYCLOAK_CLIENT_ID')!;
     this.clientSecret = this.configService.get<string>('KEYCLOAK_CLIENT_SECRET')!;
@@ -60,9 +62,15 @@ export class KeycloakService {
         this.logger.log('Keycloak admin token obtained (master realm)');
         return this.adminToken!;
       } catch (error: any) {
-        this.logger.error(
-          `Master realm auth failed: ${error.response?.data?.error_description || error.message}`,
-        );
+        const msg = error.response?.data?.error_description || error.response?.data?.error || error.message || 'Unknown error';
+        this.logger.error(`Master realm auth failed: ${msg}`);
+        if (error.response) {
+            this.logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+        } else if (error.code) {
+            this.logger.error(`Axios Code: ${error.code}, Msg: ${error.message}`);
+        } else {
+            console.error(error);
+        }
         throw error;
       }
     }
@@ -460,6 +468,286 @@ export class KeycloakService {
   }
 
   /**
+   * Helper to parse Argon2 MCF string and prepare Keycloak credential data
+   */
+  private parseArgon2HashString(hashString: string) {
+    const parts = hashString.split('$');
+    if (parts.length !== 6) {
+      throw new Error('Invalid Argon2 hash format. Expected 5 sections.');
+    }
+    const [, type, versionStr, paramsStr, saltRaw, valueRaw] = parts;
+    const version = versionStr.replace('v=', '') === '19' ? '1.3' : '1.0';
+    let memory = 65536;
+    let hashIterations = 2;
+    let parallelism = 1;
+    let hashLength: number | null = null;
+
+    paramsStr.split(',').forEach((param) => {
+      const [k, v] = param.split('=');
+      if (k === 'm') memory = parseInt(v, 10);
+      if (k === 't') hashIterations = parseInt(v, 10);
+      if (k === 'p') parallelism = parseInt(v, 10);
+      if (k === 'l') hashLength = parseInt(v, 10);
+    });
+
+    const padBase64 = (str: string) => str.padEnd(str.length + (4 - (str.length % 4)) % 4, '=');
+
+    // Calculate hashLength from the raw base64 output if not explicitly in params
+    // Keycloak's Argon2PasswordHashProvider.verify() calls Integer.parseInt() on hashLength
+    // and crashes with "Cannot parse null string" if it's missing
+    if (hashLength === null) {
+      // Argon2 MCF uses raw (unpadded) base64 — decode to get byte length
+      const paddedValue = padBase64(valueRaw);
+      const byteLength = Math.floor((paddedValue.length * 3) / 4)
+        - (paddedValue.endsWith('==') ? 2 : paddedValue.endsWith('=') ? 1 : 0);
+      hashLength = byteLength;
+    }
+
+    console.log('hashLength', hashLength);
+    
+    // Keycloak's Argon2 provider algorithm name is strictly 'argon2'
+    return {
+      credentialData: JSON.stringify({
+        hashIterations: hashIterations,
+        algorithm: 'argon2',
+        additionalParameters: {
+          hashLength: [hashLength.toString()],
+          type: [type.replace('argon2', '')], // 'id', 'i', or 'd'
+          version: [version],
+          memory: [memory.toString()],
+          parallelism: [parallelism.toString()],
+        },
+      }),
+      secretData: JSON.stringify({
+        value: padBase64(valueRaw),
+        salt: padBase64(saltRaw),
+      }),
+    };
+  }
+
+  /**
+   * Set Argon2 credential for an existing user 
+   */
+  private async setArgon2Credential(
+    userId: string,
+    argon2HashString: string,
+  ): Promise<void> {
+    const token = await this.getAdminToken();
+    const { credentialData, secretData } = this.parseArgon2HashString(argon2HashString);
+
+    const existingCreds = await axios.get(
+      `${this.baseUrl}/admin/realms/${this.realm}/users/${userId}/credentials`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+
+    for (const cred of existingCreds.data) {
+      if (cred.type === 'password') {
+        await axios.delete(
+          `${this.baseUrl}/admin/realms/${this.realm}/users/${userId}/credentials/${cred.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+      }
+    }
+
+    await axios.put(
+      `${this.baseUrl}/admin/realms/${this.realm}/users/${userId}`,
+      {
+        credentials: [
+          {
+            type: 'password',
+            credentialData: credentialData,
+            secretData: secretData,
+          },
+        ],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    this.logger.log(`Argon2 credential updated for user ${userId}`);
+  }
+
+  /**
+   * Import a single user with pre-hashed Argon2 password.
+   */
+  async importUserWithArgon2Hash(userData: {
+    username: string;
+    email: string;
+    enabled?: boolean;
+    firstName?: string;
+    lastName?: string;
+    argon2HashString: string; 
+  }): Promise<{ success: boolean; userId?: string; error?: string }> {
+    try {
+      const token = await this.getAdminToken();
+
+      const existing = await this.findUserByEmail(userData.email);
+      if (existing) {
+        this.logger.log(
+          `User already exists in Keycloak: ${userData.email}, updating argon2 credential + profile`,
+        );
+        // Update credential
+        await this.setArgon2Credential(existing.id, userData.argon2HashString);
+        // Also update profile fields (email, firstName, lastName) that may be missing
+        await axios.put(
+          `${this.baseUrl}/admin/realms/${this.realm}/users/${existing.id}`,
+          {
+            email: userData.email,
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            enabled: userData.enabled !== false,
+            emailVerified: true,
+            attributes: { auth0_migrated: ['true'] },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        this.logger.log(`Profile updated for existing user ${userData.email}`);
+        return { success: true, userId: existing.id };
+      }
+
+      const { credentialData, secretData } = this.parseArgon2HashString(userData.argon2HashString);
+
+      const response = await axios.post(
+        `${this.baseUrl}/admin/realms/${this.realm}/users`,
+        {
+          username: userData.username,
+          email: userData.email,
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          enabled: userData.enabled !== false,
+          emailVerified: true,
+          attributes: {
+            auth0_migrated: ['true'],
+          },
+          credentials: [
+            {
+              type: 'password',
+              credentialData: credentialData,
+              secretData: secretData,
+            },
+          ],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const locationHeader = response.headers['location'] || '';
+      const userId = locationHeader.split('/').pop() || '';
+
+      // Keycloak POST /users may ignore some fields — ensure all profile data via PUT
+      if (userId) {
+        await axios.put(
+          `${this.baseUrl}/admin/realms/${this.realm}/users/${userId}`,
+          {
+            email: userData.email,
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            attributes: { auth0_migrated: ['true'] },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        this.logger.log(`Profile + attributes confirmed for user ${userData.email}`);
+      }
+
+      this.logger.log(`User imported with Argon2 hash: ${userData.email} (ID: ${userId})`);
+      return { success: true, userId };
+    } catch (error: any) {
+      const msg = error.response?.data?.errorMessage || error.response?.data?.error || error.message || 'Unknown error';
+      this.logger.error(`Failed to import user with Argon2 hash ${userData.email}: ${msg}`);
+      if (error.response) {
+        this.logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      } else if (error.code) {
+        this.logger.error(`Axios Code: ${error.code}, Msg: ${error.message}`);
+      } else {
+        console.error(error);
+      }
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
+   * Import multiple users with Argon2-hashed passwords
+   */
+  async importUsersWithArgon2Hash(
+    users: Array<{
+      username: string;
+      email: string;
+      enabled?: boolean;
+      firstName?: string;
+      lastName?: string;
+      credentials: Array<{
+        type: string;
+        algorithm?: string;
+        hashedSaltedValue: string;
+        additionalParameters?: Record<string, any>;
+      }>;
+    }>,
+  ): Promise<{
+    imported: number;
+    skipped: number;
+    failed: number;
+    details: any[];
+  }> {
+    const results = { imported: 0, skipped: 0, failed: 0, details: [] as any[] };
+
+    for (const user of users) {
+      const credential = user.credentials?.[0];
+      if (!credential || !credential.hashedSaltedValue) {
+        results.failed++;
+        results.details.push({
+          username: user.username,
+          email: user.email,
+          success: false,
+          error: 'Missing credential data (hashedSaltedValue)',
+        });
+        continue;
+      }
+
+      const result = await this.importUserWithArgon2Hash({
+        username: user.username,
+        email: user.email,
+        enabled: user.enabled,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        argon2HashString: credential.hashedSaltedValue,
+      });
+
+      if (result.success) {
+        results.imported++;
+      } else {
+        results.failed++;
+      }
+
+      results.details.push({
+        username: user.username,
+        email: user.email,
+        ...result,
+      });
+    }
+
+    this.logger.log(`Argon2 import complete: ${results.imported} imported, ${results.failed} failed`);
+    return results;
+  }
+
+  /**
    * Get all users from Keycloak
    */
   async getAllUsers(): Promise<any[]> {
@@ -587,7 +875,7 @@ export class KeycloakService {
    */
   getConfig() {
     return {
-      keycloakBaseUrl: this.baseUrl,
+      keycloakBaseUrl: this.publicBaseUrl,
       keycloakRealm: this.realm,
       keycloakClientId: this.clientId,
     };

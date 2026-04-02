@@ -1,4 +1,17 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: keycloak-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   keycloak:
     build:
       context: .
@@ -6,25 +19,22 @@ services:
     container_name: keycloak-auth0-migration
     command: start-dev
     environment:
-      # Keycloak admin credentials
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin123
-      # Database (use dev-file for simplicity, or PostgreSQL for production)
-      KC_DB: dev-file
-      # HTTP
-      KC_HTTP_PORT: 9016
-      KC_HTTP_ENABLED: 'true'
-      # Hostname — public domain qua reverse proxy (Nginx)
-      KC_HOSTNAME: teacher.quizonline.website
-      KC_HOSTNAME_STRICT: 'false'
-      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: 'true'
-      # Proxy — trust X-Forwarded-* headers from Nginx
-      KC_PROXY_HEADERS: xforwarded
+      KEYCLOAK_ADMIN: ${KC_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
+      KC_DB: ${KC_DB}
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HTTP_PORT: ${KC_HTTP_PORT}
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED}
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: ${KC_HOSTNAME_BACKCHANNEL_DYNAMIC}
+      KC_PROXY_HEADERS: ${KC_PROXY_HEADERS}
     ports:
-      - '9016:9016'
-    volumes:
-      # Persist data
-      - keycloak_data:/opt/keycloak/data
+      - '${KC_HTTP_PORT:-9016}:${KC_HTTP_PORT:-9016}'
+    depends_on:
+      - postgres
     restart: unless-stopped
 
   backend:
@@ -32,8 +42,13 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     container_name: convert-user-backend
+    mem_limit: 2g
+    cpus: 2
     env_file:
       - .env
+    environment:
+      KEYCLOAK_BASE_URL: http://keycloak:${KC_HTTP_PORT:-9016}
+      KEYCLOAK_PUBLIC_URL: http://localhost:${KC_HTTP_PORT:-9016}
     ports:
       - '${PORT:-9015}:${PORT:-9015}'
     depends_on:
@@ -41,4 +56,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  keycloak_data:
+  postgres_data:
