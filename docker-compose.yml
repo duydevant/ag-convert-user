@@ -43,7 +43,6 @@ services:
       dockerfile: Dockerfile.backend
     container_name: convert-user-backend
     mem_limit: 2g
-    cpus: 2
     env_file:
       - .env
     environment:
