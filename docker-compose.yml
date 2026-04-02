@@ -46,8 +46,8 @@ services:
     env_file:
       - .env
     environment:
-      KEYCLOAK_BASE_URL: http://keycloak:${KC_HTTP_PORT:-9016}
-      KEYCLOAK_PUBLIC_URL: http://localhost:${KC_HTTP_PORT:-9016}
+      KEYCLOAK_BASE_URL: https://teacher.quizonline.website
+      KEYCLOAK_PUBLIC_URL: https://teacher.quizonline.website
     ports:
       - '${PORT:-9015}:${PORT:-9015}'
     depends_on:
