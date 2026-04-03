@@ -64,6 +64,8 @@ html .pf-v5-c-login__main-footer {
   padding: 0;
   padding-bottom: 15px;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 html .pf-v5-c-login__main-footer-band {
@@ -322,6 +324,48 @@ html .pf-v5-c-button.pf-m-primary:focus {
   border-color: var(--color-primary);
 }
 
+/* Remember me + Reset password row */
+.kc-form-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px !important;
+}
+.kc-form-options-left {
+  flex-shrink: 0;
+}
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-light);
+  cursor: pointer;
+  margin: 0;
+  white-space: nowrap;
+}
+.remember-me-label input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+.kc-form-options-right {
+  flex-shrink: 0;
+}
+.reset-password-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.reset-password-link:hover {
+  color: var(--color-primary-hover);
+  text-decoration: none;
+}
+
 /* Links */
 html .pf-v5-c-button.pf-m-link {
   font-size: 14px;
@@ -333,18 +377,15 @@ html .pf-v5-c-button.pf-m-link:hover {
   text-decoration: none;
 }
 
-#kc-form-login a[href*="reset-credentials"] {
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-}
 #kc-registration-container {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 16px;
 }
 #kc-registration,
 #kc-registration-container {
-  text-align: left;
+  text-align: center;
   font-size: 14px;
   color: var(--color-text);
 }
@@ -353,7 +394,6 @@ html .pf-v5-c-button.pf-m-link:hover {
   font-weight: 600;
   text-decoration: none;
 }
-#kc-form-login a[href*="reset-credentials"]:hover,
 #kc-registration a:hover,
 #kc-registration-container a:hover {
   color: var(--color-primary);
@@ -368,6 +408,28 @@ html body .pf-v5-c-helper-text {
 }
 
 /* Social login */
+.social-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+.social-divider::before,
+.social-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+.social-divider span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+#kc-social-providers {
+  padding: 0 40px;
+}
 #kc-social-providers ul {
   list-style: none;
   padding: 0;
@@ -378,46 +440,38 @@ html body .pf-v5-c-helper-text {
 #kc-social-providers ul li {
   flex: 1;
 }
-#kc-social-providers a.pf-v5-c-button {
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
   height: 40px;
   padding: 0 16px;
-  gap: 8px;
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-bg);
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: none;
 }
-#kc-social-providers .fa,
-#kc-social-providers .fab,
-#kc-social-providers .fas {
-  font-size: 18px;
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
-}
-#kc-social-providers a.pf-v5-c-button:hover,
-#kc-social-providers a.pf-v5-c-button:focus {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
+.social-btn:hover,
+.social-btn:focus {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  color: var(--color-text);
   box-shadow: none;
+  text-decoration: none;
 }
-#kc-social-providers svg {
-  width: 20px;
-  height: 20px;
+.social-icon {
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
-html .pf-v5-c-login__main-footer-links {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-html .pf-v5-c-login__main-footer-links-item {
-  width: 100%;
-}
 hr {
   border: none;
   border-top: 1px solid #e2e8f0;

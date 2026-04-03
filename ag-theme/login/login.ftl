@@ -42,11 +42,11 @@
                                 </span>
                             </#if>
                         </div>
-                        <div class="${properties.kcFormGroupClass!} ${properties.kcFormSettingClass!}">
-                            <div id="kc-form-options">
+                        <div class="${properties.kcFormGroupClass!} kc-form-options-row">
+                            <div id="kc-form-options" class="kc-form-options-left">
                                 <#if realm.rememberMe && !usernameHidden??>
                                     <div class="checkbox">
-                                        <label>
+                                        <label class="remember-me-label">
                                             <#if login.rememberMe??>
                                                 <input tabindex="3" id="rememberMe" name="rememberMe" type="checkbox" checked> ${msg("rememberMe")}
                                             <#else>
@@ -56,9 +56,9 @@
                                     </div>
                                 </#if>
                             </div>
-                            <div class="${properties.kcFormOptionsWrapperClass!}">
+                            <div class="kc-form-options-right">
                                 <#if realm.resetPasswordAllowed>
-                                    <span><a tabindex="5" href="${url.loginResetCredentialsUrl}">${msg("doForgotPassword")}</a></span>
+                                    <a tabindex="5" href="${url.loginResetCredentialsUrl}" class="reset-password-link">${msg("doForgotPassword")}</a>
                                 </#if>
                             </div>
                         </div>
@@ -83,13 +83,21 @@
     <#elseif section = "socialProviders">
         <#if realm.password && social?? && social.providers?has_content>
             <div id="kc-social-providers">
-                <hr/>
+                <div class="social-divider">
+                    <span>or sign in with</span>
+                </div>
                 <ul>
                     <#list social.providers as p>
                         <li>
                             <a href="${p.loginUrl}" id="social-${p.alias}"
-                               class="pf-v5-c-button pf-m-secondary pf-m-block pf-v5-u-display-flex pf-v5-u-align-items-center">
-                                <i class="fa fa-${p.alias}" aria-hidden="true"></i>
+                               class="social-btn">
+                                <#if p.alias == "google">
+                                    <img src="${url.resourcesPath}/img/google-icon-logo-svgrepo-com.svg" alt="Google" class="social-icon" />
+                                <#elseif p.alias == "facebook">
+                                    <img src="${url.resourcesPath}/img/facebook.svg" alt="Facebook" class="social-icon" />
+                                <#else>
+                                    <i class="fa fa-${p.alias}" aria-hidden="true"></i>
+                                </#if>
                                 <span>${p.displayName!}</span>
                             </a>
                         </li>
