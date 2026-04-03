@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { CustomAuthModule } from './custom-auth/custom-auth.module';
 import { KeycloakModule } from './keycloak/keycloak.module';
 import { MigrationModule } from './migration/migration.module';
+import { TokenValidationModule } from './token-validation/token-validation.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MigrationModule } from './migration/migration.module';
     CustomAuthModule,
     KeycloakModule,
     MigrationModule,
+    TokenValidationModule,
   ],
 })
 export class AppModule {}

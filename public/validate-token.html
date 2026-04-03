@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Validator - Migration Tool</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .token-input {
+      width: 100%;
+      min-height: 120px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      resize: vertical;
+      outline: none;
+      transition: var(--transition);
+    }
+    .token-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+    }
+    .token-input::placeholder {
+      color: var(--text-muted);
+    }
+    .result-container {
+      margin-top: 1.5rem;
+    }
+    .result-valid {
+      border-left: 4px solid var(--success);
+      padding-left: 1rem;
+    }
+    .result-invalid {
+      border-left: 4px solid var(--danger);
+      padding-left: 1rem;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 8px 16px;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+    }
+    .info-grid dt {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .info-grid dd {
+      color: var(--text-primary);
+      word-break: break-all;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-valid {
+      background: rgba(0, 214, 143, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(0, 214, 143, 0.3);
+    }
+    .badge-invalid {
+      background: rgba(255, 71, 87, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(255, 71, 87, 0.3);
+    }
+    .badge-expired {
+      background: rgba(255, 165, 2, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(255, 165, 2, 0.3);
+    }
+    .claims-section {
+      margin-top: 1.5rem;
+    }
+    .claims-section h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .roles-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .role-tag {
+      background: rgba(108, 99, 255, 0.12);
+      color: var(--accent);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      border: 1px solid rgba(108, 99, 255, 0.25);
+    }
+    .json-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .source-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .source-tab {
+      flex: 1;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      border: none;
+      transition: var(--transition);
+    }
+    .source-tab:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+    .source-tab.active {
+      background: var(--accent);
+      color: white;
+    }
+    .source-tab:hover:not(.active) {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo">🔄</div>
+      <span>Migration Tool</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Dashboard</a></li>
+      <li><a href="/register.html">Register</a></li>
+      <li><a href="/login.html">Login Test</a></li>
+      <li><a href="/export.html">Export/Import</a></li>
+      <li><a href="/migrate.html">Migrate</a></li>
+      <li><a href="/keycloak-login.html">Backend Login</a></li>
+      <li><a href="/validate-token.html" class="active">Validate Token</a></li>
+    </ul>
+  </nav>
+
+  <div class="container fade-in">
+    <div class="page-header">
+      <h1>🔍 Token Validator</h1>
+      <p>Xác thực Access Token từ <strong>bất kỳ Keycloak Client nào</strong> trong Realm — sử dụng JWKS public key</p>
+    </div>
+
+    <!-- Input Section -->
+    <div class="card">
+      <div class="card-header">
+        <div class="icon keycloak">🔑</div>
+        <div>
+          <h3>Nhập Access Token</h3>
+          <p>Dán token từ bất kỳ Client nào (ag-backend, ag-frontend, react-app, ...)</p>
+        </div>
+      </div>
+
+      <!-- Source Tabs -->
+      <div class="source-tabs">
+        <button class="source-tab active" onclick="switchTab('paste')">📋 Paste Token</button>
+        <button class="source-tab" onclick="switchTab('header')">📡 Test với Header</button>
+      </div>
+
+      <!-- Tab 1: Paste token -->
+      <div class="tab-content active" id="tab-paste">
+        <textarea class="token-input" id="tokenInput" placeholder="Paste access token vào đây...&#10;&#10;Ví dụ: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="validateToken()">🔍 Validate Token</button>
+          <button class="btn btn-outline" onclick="clearAll()">🗑️ Clear</button>
+          <button class="btn btn-outline" onclick="pasteFromClipboard()">📋 Paste từ Clipboard</button>
+        </div>
+      </div>
+
+      <!-- Tab 2: Authorization header test -->
+      <div class="tab-content" id="tab-header">
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.85rem; font-weight: 500; display: block; margin-bottom: 6px;">Authorization Header</label>
+          <input type="text" class="token-input" id="headerInput" style="min-height: auto; height: 50px;"
+            placeholder="Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...">
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="validateWithHeader()">📡 Gửi với Authorization Header</button>
+          <button class="btn btn-outline" onclick="clearAll()">🗑️ Clear</button>
+        </div>
+        <div class="alert alert-info" style="margin-top: 1rem;">
+          ℹ️ Chế độ này mô phỏng đúng cách Frontend thật sự gửi token cho Backend — qua HTTP header <code>Authorization: Bearer &lt;token&gt;</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Section -->
+    <div id="resultSection" style="display: none; margin-top: 1.5rem;">
+
+      <!-- Status Banner -->
+      <div class="card" id="statusCard">
+        <div class="card-header" id="statusHeader">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Token Info -->
+      <div class="card" style="margin-top: 1rem;" id="tokenInfoCard" style="display:none;">
+        <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem;">📊 Token Info</h4>
+        <dl class="info-grid" id="tokenInfoGrid">
+          <!-- Filled by JS -->
+        </dl>
+      </div>
+
+      <!-- User Claims -->
+      <div class="card" style="margin-top: 1rem;" id="userClaimsCard" style="display:none;">
+        <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem;">👤 User Claims</h4>
+        <dl class="info-grid" id="userClaimsGrid">
+          <!-- Filled by JS -->
+        </dl>
+
+        <!-- Roles -->
+        <div class="claims-section" id="rolesSection" style="display:none;">
+          <h4>🛡️ Realm Roles</h4>
+          <div class="roles-list" id="realmRolesList"></div>
+        </div>
+
+        <div class="claims-section" id="resourceRolesSection" style="display:none;">
+          <h4>📦 Resource Access (Client Roles)</h4>
+          <div id="resourceRolesList"></div>
+        </div>
+      </div>
+
+      <!-- Full Decoded Token -->
+      <div class="card" style="margin-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 600;">📦 Full Decoded Token</h4>
+          <button class="btn btn-outline" onclick="copyFullResponse()" style="padding: 4px 12px; font-size: 0.75rem;">📋 Copy</button>
+        </div>
+        <div class="json-box" id="fullResponseJson">-</div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingSection" style="display: none; margin-top: 1.5rem;">
+      <div class="card" style="text-align: center; padding: 2rem;">
+        <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 1rem;"></div>
+        <p style="color: var(--text-secondary);">Đang xác thực token...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ──────────────────────────────
+    // Tab Switching
+    // ──────────────────────────────
+    function switchTab(tab) {
+      document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.add('active');
+    }
+
+    // ──────────────────────────────
+    // Validate via body
+    // ──────────────────────────────
+    async function validateToken() {
+      const token = document.getElementById('tokenInput').value.trim();
+      if (!token) {
+        alert('Vui lòng nhập token!');
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const res = await fetch('/api/token/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        const data = await res.json();
+        displayResult(data);
+      } catch (err) {
+        displayResult({ valid: false, error: `Network error: ${err.message}` });
+      }
+    }
+
+    // ──────────────────────────────
+    // Validate via Authorization header
+    // ──────────────────────────────
+    async function validateWithHeader() {
+      let headerValue = document.getElementById('headerInput').value.trim();
+      if (!headerValue) {
+        alert('Vui lòng nhập Authorization header!');
+        return;
+      }
+      // Auto-prefix Bearer if missing
+      if (!headerValue.toLowerCase().startsWith('bearer ')) {
+        headerValue = 'Bearer ' + headerValue;
+      }
+
+      showLoading(true);
+
+      try {
+        const res = await fetch('/api/token/validate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': headerValue,
+          },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        displayResult(data);
+      } catch (err) {
+        displayResult({ valid: false, error: `Network error: ${err.message}` });
+      }
+    }
+
+    // ──────────────────────────────
+    // Display validation result
+    // ──────────────────────────────
+    function displayResult(data) {
+      showLoading(false);
+      const section = document.getElementById('resultSection');
+      section.style.display = 'block';
+
+      const statusCard = document.getElementById('statusCard');
+      const statusHeader = document.getElementById('statusHeader');
+
+      if (data.valid) {
+        statusCard.className = 'card result-valid';
+        statusHeader.innerHTML = `
+          <div class="icon keycloak" style="background: rgba(0,214,143,0.15);">✅</div>
+          <div>
+            <h3>Token Hợp Lệ <span class="badge badge-valid">VALID</span></h3>
+            <p>Token đã được xác thực thành công bằng JWKS public key</p>
+          </div>
+        `;
+
+        // Token Info
+        const tokenInfoCard = document.getElementById('tokenInfoCard');
+        tokenInfoCard.style.display = 'block';
+        const info = data.tokenInfo || {};
+        document.getElementById('tokenInfoGrid').innerHTML = `
+          <dt>Issuer (Server)</dt><dd>${info.issuer || '-'}</dd>
+          <dt>Client ID</dt><dd><span class="badge badge-valid">${info.clientId || '-'}</span></dd>
+          <dt>Issued At</dt><dd>${info.issuedAt ? new Date(info.issuedAt).toLocaleString() : '-'}</dd>
+          <dt>Expires At</dt><dd>${info.expiresAt ? new Date(info.expiresAt).toLocaleString() : '-'}</dd>
+          <dt>Remaining</dt><dd>${info.remainingSeconds != null ? formatDuration(info.remainingSeconds) : '-'}</dd>
+        `;
+
+        // User Claims
+        const claims = data.decoded || {};
+        const userClaimsCard = document.getElementById('userClaimsCard');
+        userClaimsCard.style.display = 'block';
+        document.getElementById('userClaimsGrid').innerHTML = `
+          <dt>Subject (sub)</dt><dd>${claims.sub || '-'}</dd>
+          <dt>Email</dt><dd>${claims.email || '-'}</dd>
+          <dt>Email Verified</dt><dd>${claims.email_verified != null ? (claims.email_verified ? '✅ Yes' : '❌ No') : '-'}</dd>
+          <dt>Username</dt><dd>${claims.preferred_username || '-'}</dd>
+          <dt>Name</dt><dd>${claims.name || ((claims.given_name || '') + ' ' + (claims.family_name || '')).trim() || '-'}</dd>
+          <dt>Scope</dt><dd>${claims.scope || '-'}</dd>
+          <dt>Session State</dt><dd style="font-size:0.8rem;">${claims.session_state || '-'}</dd>
+        `;
+
+        // Realm Roles
+        const realmRoles = claims.realm_access?.roles || [];
+        const rolesSection = document.getElementById('rolesSection');
+        if (realmRoles.length > 0) {
+          rolesSection.style.display = 'block';
+          document.getElementById('realmRolesList').innerHTML = realmRoles
+            .map(r => `<span class="role-tag">${r}</span>`).join('');
+        } else {
+          rolesSection.style.display = 'none';
+        }
+
+        // Resource Access
+        const resourceAccess = claims.resource_access || {};
+        const resourceSection = document.getElementById('resourceRolesSection');
+        const clientNames = Object.keys(resourceAccess);
+        if (clientNames.length > 0) {
+          resourceSection.style.display = 'block';
+          document.getElementById('resourceRolesList').innerHTML = clientNames.map(client => {
+            const roles = resourceAccess[client]?.roles || [];
+            return `
+              <div style="margin-top: 8px;">
+                <strong style="font-size: 0.8rem; color: var(--text-secondary);">${client}:</strong>
+                <div class="roles-list" style="margin-top: 4px;">
+                  ${roles.map(r => `<span class="role-tag">${r}</span>`).join('')}
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          resourceSection.style.display = 'none';
+        }
+      } else {
+        // Invalid token
+        statusCard.className = 'card result-invalid';
+        const isExpired = data.error && data.error.toLowerCase().includes('expired');
+        statusHeader.innerHTML = `
+          <div class="icon auth0" style="background: rgba(255,71,87,0.15);">❌</div>
+          <div>
+            <h3>Token Không Hợp Lệ <span class="badge ${isExpired ? 'badge-expired' : 'badge-invalid'}">${isExpired ? 'EXPIRED' : 'INVALID'}</span></h3>
+            <p>${escapeHtml(data.error || 'Unknown error')}</p>
+          </div>
+        `;
+
+        document.getElementById('tokenInfoCard').style.display = 'none';
+        document.getElementById('userClaimsCard').style.display = 'none';
+      }
+
+      // Full JSON response
+      document.getElementById('fullResponseJson').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // ──────────────────────────────
+    // Helpers
+    // ──────────────────────────────
+    function showLoading(show) {
+      document.getElementById('loadingSection').style.display = show ? 'block' : 'none';
+      if (show) document.getElementById('resultSection').style.display = 'none';
+    }
+
+    function clearAll() {
+      document.getElementById('tokenInput').value = '';
+      document.getElementById('headerInput').value = '';
+      document.getElementById('resultSection').style.display = 'none';
+    }
+
+    async function pasteFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('tokenInput').value = text;
+      } catch {
+        alert('Không thể đọc clipboard. Hãy paste bằng Ctrl+V.');
+      }
+    }
+
+    function copyFullResponse() {
+      const text = document.getElementById('fullResponseJson').textContent;
+      navigator.clipboard.writeText(text).then(() => alert('✅ Copied!'));
+    }
+
+    function formatDuration(seconds) {
+      if (seconds <= 0) return '⚠️ Đã hết hạn';
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return m > 0 ? `${m} phút ${s} giây` : `${s} giây`;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
